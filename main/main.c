@@ -4,8 +4,9 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
-#include "driver/gpio.h"        // ← TAMBAH INI
-#include "esp_ota_ops.h"        // ← TAMBAH INI
+#include "driver/gpio.h"
+#include "esp_ota_ops.h"
+#include "esp_http_client.h"    // ← TAMBAH INI
 
 #include "led_indicator.h"
 #include "wifi_manager.h"
@@ -14,7 +15,7 @@
 
 static const char *TAG = "MAIN";
 
-#define BOOT_BUTTON_GPIO 0
+#define BOOT_BUTTON_GPIO 4          // ← GANTI KE GPIO4
 #define VALIDATION_TIME_MS 10000
 
 void app_main(void)
@@ -42,7 +43,10 @@ void app_main(void)
     
     vTaskDelay(pdMS_TO_TICKS(100)); // Debounce
     
-    if (gpio_get_level(BOOT_BUTTON_GPIO) == 0) {
+    int boot_level = gpio_get_level(BOOT_BUTTON_GPIO);
+    ESP_LOGI(TAG, "GPIO%d (Recovery Button) level: %d", BOOT_BUTTON_GPIO, boot_level);
+    
+    if (boot_level == 0) {
         ESP_LOGI(TAG, "Recovery mode triggered!");
         led_set_mode(LED_MODE_RECOVERY);
         recovery_mode_start();
@@ -70,10 +74,13 @@ void app_main(void)
     // Normal operation
     led_set_mode(LED_MODE_NORMAL);
     ESP_LOGI(TAG, "Starting normal operation...");
+    ESP_LOGI(TAG, "Running from partition: %s", running->label);
     
     // Initialize WiFi and start OTA server
     wifi_init();
     ota_manager_start();
+    
+    ESP_LOGI(TAG, "System ready. Access OTA portal at http://<ESP32_IP>");
     
     // Main loop
     while (1) {
