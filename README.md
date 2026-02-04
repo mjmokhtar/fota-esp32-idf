@@ -245,13 +245,9 @@ firmware-assessment-esp32/
 - Add error handling for all operations
 - Document non-obvious code
 
-## License
-
-MIT License - See LICENSE file for details
-
 ## Author
 
-**Your Name** - Firmware Assessment Submission
+**Muhammad Jumi'at Mokhtar** - Firmware Assessment Submission
 
 ## Acknowledgments
 
