@@ -15,10 +15,5 @@ esp_err_t ota_manager_start(void);
  */
 esp_err_t ota_update_from_url(const char *url);
 
-/**
- * @brief Wrapper task for OTA update
- * Internal use only
- */
-static void ota_update_task_wrapper(void *pvParameter);
 
 #endif
