@@ -4,11 +4,13 @@
 #include "esp_log.h"
 #include "esp_http_server.h"
 #include "nvs_flash.h"
+#include "wifi_manager.h"
+#include "ota_manager.h"
 
 static const char *TAG = "RECOVERY";
 
-#define RECOVERY_AP_SSID "ESP32-Recovery"
-#define RECOVERY_AP_PASS "recovery123"
+#define RECOVERY_AP_SSID "IoT_M2M"
+#define RECOVERY_AP_PASS "Mj02miat"
 
 // HTML page untuk config
 static const char *html_page = 
@@ -41,14 +43,51 @@ static esp_err_t config_handler(httpd_req_t *req)
     if (ret <= 0) {
         return ESP_FAIL;
     }
+    buf[ret] = '\0';
     
-    // Parse form data (simplified - production harus lebih robust)
-    // Format: ssid=XXX&pass=YYY
-    // TODO: Implement proper URL decode dan save ke NVS
+    // Parse form data: ssid=XXX&pass=YYY
+    char ssid[33] = {0};
+    char pass[64] = {0};
     
-    ESP_LOGI(TAG, "WiFi config updated");
-    httpd_resp_send(req, "Config saved! Reboot to apply.", 29);
-    return ESP_OK;
+    // Simple parser
+    char *ssid_start = strstr(buf, "ssid=");
+    char *pass_start = strstr(buf, "pass=");
+    
+    if (ssid_start && pass_start) {
+        ssid_start += 5; // skip "ssid="
+        char *ssid_end = strchr(ssid_start, '&');
+        if (ssid_end) {
+            int len = ssid_end - ssid_start;
+            if (len < sizeof(ssid)) {
+                strncpy(ssid, ssid_start, len);
+            }
+        }
+        
+        pass_start += 5; // skip "pass="
+        char *pass_end = strchr(pass_start, '&');
+        int len = pass_end ? (pass_end - pass_start) : strlen(pass_start);
+        if (len < sizeof(pass)) {
+            strncpy(pass, pass_start, len);
+        }
+        
+        // URL decode spaces
+        for (int i = 0; ssid[i]; i++) {
+            if (ssid[i] == '+') ssid[i] = ' ';
+        }
+        for (int i = 0; pass[i]; i++) {
+            if (pass[i] == '+') pass[i] = ' ';
+        }
+        
+        // Save to NVS
+        wifi_save_credentials(ssid, pass);
+        
+        ESP_LOGI(TAG, "WiFi config saved: SSID=%s", ssid);
+        httpd_resp_send(req, "Config saved! Please reboot device.", 36);
+        return ESP_OK;
+    }
+    
+    httpd_resp_send(req, "Invalid data", 12);
+    return ESP_FAIL;
 }
 
 // Handler untuk trigger OTA
@@ -59,12 +98,30 @@ static esp_err_t ota_handler(httpd_req_t *req)
     if (ret <= 0) {
         return ESP_FAIL;
     }
+    buf[ret] = '\0';
     
-    // Parse URL dan trigger OTA
-    // TODO: Implement OTA from URL
+    // Parse URL: url=http://...
+    char url[150] = {0};
+    char *url_start = strstr(buf, "url=");
     
-    httpd_resp_send(req, "OTA triggered!", 14);
-    return ESP_OK;
+    if (url_start) {
+        url_start += 4;
+        char *url_end = strchr(url_start, '&');
+        int len = url_end ? (url_end - url_start) : strlen(url_start);
+        if (len < sizeof(url)) {
+            strncpy(url, url_start, len);
+        }
+        
+        ESP_LOGI(TAG, "OTA URL: %s", url);
+        httpd_resp_send(req, "OTA started! Device will reboot after update.", 47);
+        
+        // Trigger OTA (dari ota_manager)
+        ota_update_from_url(url);
+        return ESP_OK;
+    }
+    
+    httpd_resp_send(req, "Invalid URL", 11);
+    return ESP_FAIL;
 }
 
 void recovery_mode_start(void)
