@@ -54,8 +54,8 @@ source export.sh
 ### Build & Flash
 ```bash
 # Clone repository
-git clone <your-repo-url>
-cd firmware-assessment-esp32
+git clone https://github.com/mjmokhtar/fota-esp32-idf
+cd fota-esp32-idf
 
 # Configure (optional)
 idf.py menuconfig
