@@ -64,7 +64,9 @@ idf.py menuconfig
 idf.py build
 
 # Flash & Monitor
-idf.py -p /dev/ttyUSB0 flash monitor
+python -m esptool --chip esp32 -b 460800 --before default_reset --after hard_reset write_flash --flash_mode dio --flash_size 4MB --flash_freq 40m 0x1000 build/bootloader/bootloader.bin 0x8000 build/partition_table/partition-table.bin 0x10000 build/secure-ota-esp32.bin
+
+python -m serial.tools.miniterm "COM4" 115200
 ```
 
 ### First Boot
