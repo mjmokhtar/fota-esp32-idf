@@ -14,4 +14,5 @@ idf_component_register(
         app_update
         bootloader_support
         esp_driver_gpio
+        esp_http_client
 )

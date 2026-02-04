@@ -14,8 +14,8 @@ static const char *TAG = "WIFI_MGR";
 #define MAX_RETRY          5
 
 #define NVS_NAMESPACE "wifi_config"
-#define NVS_SSID_KEY  "ssid"
-#define NVS_PASS_KEY  "password"
+#define NVS_SSID_KEY  "IoT_M2M"
+#define NVS_PASS_KEY  "Mj02miat"
 
 static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
@@ -126,8 +126,8 @@ esp_err_t wifi_init(void)
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "No WiFi credentials found in NVS");
         // Set default credentials for first boot
-        strcpy(ssid, "YourWiFiSSID");
-        strcpy(password, "YourPassword");
+        strcpy(ssid, "IoT_M2M");
+        strcpy(password, "Mj02miat");
         wifi_save_credentials(ssid, password);
     }
 
